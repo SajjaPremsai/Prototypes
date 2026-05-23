@@ -5,8 +5,10 @@ import (
 	"io"
 	"log"
 	"net"
+	"strings"
 
 	"github.com/redis/config"
+	"github.com/redis/core"
 )
 
 func RunSyncTCPServer() {
@@ -31,31 +33,46 @@ func RunSyncTCPServer() {
 				conClients--
 				log.Printf("Client disconnected: %s (Concurrent clients: %d)", c.RemoteAddr(), conClients)
 				if err != io.EOF {
-					log.Println("Error reading command:", err)
+					log.Println("read error", err)
 				}
 				break
 			}
-			log.Println("Received command:", cmd)
-			if err = respond(cmd, c); err != nil {
-				log.Println("Error writing response:", err)
+
+			if cmd == nil {
+				continue
+			}
+
+			if err := respond(cmd, c); err != nil {
+				respondError(err, c)
 				break
 			}
 		}
 	}
 }
 
-func readCommand(c net.Conn) (string, error) {
-	buf := make([]byte, 512)
+func readCommand(c net.Conn) (*core.RedisCmd, error) {
+	var buf []byte = make([]byte, 512)
 	n, err := c.Read(buf)
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(buf[:n]), nil
+
+	tokens, err := core.DecodeArrayString(buf[:n])
+	if err != nil {
+		return nil, err
+	}
+
+	return &core.RedisCmd{
+		Cmd:  strings.ToUpper(tokens[0]),
+		Args: tokens[1:],
+	}, nil
 }
 
-func respond(cmd string, c net.Conn) error {
-	if _, err := c.Write([]byte(cmd)); err != nil {
-		return err
-	}
-	return nil
+func respondError(err error, c net.Conn) {
+	c.Write([]byte(fmt.Sprintf("-%s\r\n", err.Error())))
+}
+
+func respond(cmd *core.RedisCmd, c net.Conn) error {
+	return core.EvalAndRespond(cmd, c)
 }
