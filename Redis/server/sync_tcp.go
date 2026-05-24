@@ -30,22 +30,15 @@ func RunSyncTCPServer() {
 			cmd, err := readCommand(c)
 			if err != nil {
 				c.Close()
-				conClients--
+				conClients -= 1
 				log.Printf("Client disconnected: %s (Concurrent clients: %d)", c.RemoteAddr(), conClients)
 				if err != io.EOF {
-					log.Println("read error", err)
+					break
 				}
+				log.Println("Error :", err)
 				break
 			}
-
-			if cmd == nil {
-				continue
-			}
-
-			if err := respond(cmd, c); err != nil {
-				respondError(err, c)
-				break
-			}
+			respond(cmd, c)
 		}
 	}
 }
@@ -70,9 +63,12 @@ func readCommand(c net.Conn) (*core.RedisCmd, error) {
 }
 
 func respondError(err error, c net.Conn) {
-	c.Write([]byte(fmt.Sprintf("-%s\r\n", err.Error())))
+	c.Write([]byte(fmt.Sprintf("-%s\r\n", err)))
 }
 
-func respond(cmd *core.RedisCmd, c net.Conn) error {
-	return core.EvalAndRespond(cmd, c)
+func respond(cmd *core.RedisCmd, c net.Conn){
+	err := core.EvalAndRespond(cmd, c)
+	if err != nil {
+		respondError(err, c)
+	}
 }
