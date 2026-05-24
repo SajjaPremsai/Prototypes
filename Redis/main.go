@@ -17,5 +17,5 @@ func setupFlags() {
 func main() {
 	setupFlags()
 	log.Printf("Starting Redis server on %s:%d", config.Host, config.Port)
-	server.RunSyncTCPServer()
+	server.RunAsyncTCPServer()
 }
