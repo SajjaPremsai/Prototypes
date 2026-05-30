@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+echo "Running pytest before git push..."
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON=python3
+else
+  PYTHON=python
+fi
+
+$PYTHON -m pytest
+
+echo "pytest passed. Proceeding with push."

@@ -1,0 +1,4 @@
+
+Hello, world!
+This is a test of the GPT-2 style BPE tokenizer.
+Let's ensure punctuation, apostrophes, and whitespace are preserved.
