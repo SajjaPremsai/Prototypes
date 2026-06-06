@@ -1,0 +1,14 @@
+So the tokenizer is just used to identification so take a example words like abcdef
+
+a - [1,2,3]
+b - [4,2,1]
+c - [0,9,8]
+d - [0,1,0]
+e - [1,0,1]
+f - [0,0,1]
+
+
+like this you know that a is first vector and b is second vector but the model doesn't now right
+
+so we map those tokens to each integer like 0 like that 
+
